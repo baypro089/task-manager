@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    /* Môi trường Target & Hệ thống Module */
+    "target": "ES2022",                          // Sử dụng các tính năng JS hiện đại tương thích tốt với Node.js mới
+    "module": "NodeNext",                        // Bắt buộc cho Node.js ESM/CJS native hiện nay
+    "moduleResolution": "NodeNext",              // Giúp giải quyết import chính xác theo quy chuẩn Node.js
+    "lib": ["ES2022"],                           // Chỉ bao gồm thư viện ES cốt lõi (loại bỏ DOM của trình duyệt)
+
+    /* Cấu hình thư mục Build */
+    "rootDir": "./src",                          // Thư mục chứa mã nguồn TypeScript gốc
+    "outDir": "./dist",                          // Thư mục chứa file JavaScript sau khi build thành công
+    "sourceMap": true,                           // Tạo file .js.map giúp debug chính xác lỗi trên dòng code TS
+
+    "types": ["node"],
+
+    /* Kiểm tra kiểu nghiêm ngặt (Strictness) */
+    "strict": true,                              // Bật tất cả các tính năng kiểm tra kiểu nghiêm ngặt
+    "noUncheckedIndexedAccess": true,            // Bắt buộc check undefined khi truy cập object/array qua index
+    "noImplicitOverride": true,                  // Yêu cầu từ khóa 'override' khi ghi đè method trong class
+    "noFallthroughCasesInSwitch": true,           // Báo lỗi nếu quên 'break' trong câu lệnh switch-case
+
+    /* Khả năng tương thích & Tối ưu hóa hiệu năng */
+    "esModuleInterop": true,                      // Hỗ trợ import các module CommonJS cũ mượt mà hơn
+    "forceConsistentCasingInFileNames": true,    // Tránh lỗi phân biệt hoa/thường khi đổi hệ điều hành (Windows vs Linux)
+    "skipLibCheck": true,                         // Bỏ qua kiểm tra kiểu trong node_modules để tăng tốc độ build
+    "verbatimModuleSyntax": true,                 // Tối ưu hóa việc loại bỏ import chỉ phục vụ cho type khi compile
+    "resolveJsonModule": true                    // Cho phép import trực tiếp file .json
+  },
+  "include": ["src/**/*"],                       // Chỉ compile các file nằm trong thư mục src
+  "exclude": ["node_modules", "dist"]            // Loại bỏ các thư mục này khỏi quá trình quét của compiler
+}
