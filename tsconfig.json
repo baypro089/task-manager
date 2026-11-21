@@ -7,11 +7,18 @@
     "lib": ["ES2022"],                           // Chỉ bao gồm thư viện ES cốt lõi (loại bỏ DOM của trình duyệt)
 
     /* Cấu hình thư mục Build */
-    "rootDir": "./src",                          // Thư mục chứa mã nguồn TypeScript gốc
     "outDir": "./dist",                          // Thư mục chứa file JavaScript sau khi build thành công
+    "rootDir": "./src",                          // Thư mục gốc chứa code TypeScript
     "sourceMap": true,                           // Tạo file .js.map giúp debug chính xác lỗi trên dòng code TS
 
     "types": ["node"],
+
+    // Cấu hình alias import để tránh dùng đường dẫn dài
+    "paths": {
+      "@/*": ["./src/*"],
+      "@libs/*": ["./libs/*"]
+    },
+
 
     /* Kiểm tra kiểu nghiêm ngặt (Strictness) */
     "strict": true,                              // Bật tất cả các tính năng kiểm tra kiểu nghiêm ngặt
@@ -26,6 +33,6 @@
     "verbatimModuleSyntax": true,                 // Tối ưu hóa việc loại bỏ import chỉ phục vụ cho type khi compile
     "resolveJsonModule": true                    // Cho phép import trực tiếp file .json
   },
-  "include": ["src/**/*"],                       // Chỉ compile các file nằm trong thư mục src
+  "include": ["src/**/*", "src/types/**/*.d.ts"],         // Chỉ compile các file nằm trong thư mục src
   "exclude": ["node_modules", "dist"]            // Loại bỏ các thư mục này khỏi quá trình quét của compiler
 }

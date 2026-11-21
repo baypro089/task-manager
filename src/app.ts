@@ -8,12 +8,11 @@ import express, {
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import { errorHandler } from './middlewares/error.middleware.js';
+import apiRoutes from "./routes/index.js";
+import { swaggerUiServe, swaggerUiSetup } from "./configuration/swagger.js";
 
 const app: Application = express();
-
-// ============================================
-// 1. Global Middleware (thứ tự rất quan trọng!)
-// ============================================
 
 // Bảo mật HTTP headers
 app.use(helmet());
@@ -30,45 +29,19 @@ if (process.env.NODE_ENV !== "test") {
   app.use(morgan("dev"));
 }
 
-// ============================================
-// 2. Routes
-// ============================================
-// import { userRouter } from './modules/users/user.routes.js';
+// Swagger UI endpoint
+app.use('/api-docs', swaggerUiServe, swaggerUiSetup);
 
-// app.use('/api/users', userRouter);
+// Register API routes
+app.use("/api/v1", apiRoutes);
 
 // Health check endpoint — hữu ích cho load balancer / Kubernetes
 app.get("/health", (_req: Request, res: Response) => {
   res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// ============================================
-// 3. 404 Handler (phải đặt SAU tất cả routes)
-// ============================================
-app.use((_req: Request, res: Response) => {
-  res.status(404).json({
-    success: false,
-    message: "Route not found",
-  });
-});
 
-// ============================================
-// 4. Global Error Handler (phải đặt CUỐI CÙNG)
-// ============================================
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  console.error("❌ Error:", err);
-
-  const statusCode = (err as any).statusCode ?? 500;
-  const message =
-    process.env.NODE_ENV === "production"
-      ? "Internal server error"
-      : err.message;
-
-  res.status(statusCode).json({
-    success: false,
-    message,
-    ...(process.env.NODE_ENV !== "production" && { stack: err.stack }),
-  });
-});
+// Global error handler (phải đặt SAU tất cả middleware và routes)
+app.use(errorHandler);
 
 export default app;

@@ -70,3 +70,4 @@ Thumbs.db
 *.seed
 *.pid.lock
 .eslintcache
+/src/generated/prisma
