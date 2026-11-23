@@ -1,11 +1,6 @@
-// src/services/workspace/workspace.service.ts
 import slugify from 'slugify';
-import type { Workspace, WorkspaceMember, WorkspaceRole } from '@prisma/client';
-import type {
-    IWorkspaceRepository,
-    WorkspaceWithCounts,
-    WorkspaceMemberWithUser,
-} from '@/repositories/interfaces/workspace.repository.interface.js';
+import type { WorkspaceRole } from '@/generated/prisma/client.js';
+import type { IWorkspaceRepository } from '@/repositories/interfaces/workspace.repository.interface.js';
 import type { CreateWorkspaceDto } from '@/dtos/workspace.dto.js';
 import type { UpdateWorkspaceDto } from '@/dtos/workspace.dto.js';
 import type { InviteMemberDto } from '@/dtos/workspace.dto.js';
@@ -13,12 +8,16 @@ import type { UpdateRoleDto } from '@/dtos/workspace.dto.js';
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '@/utils/errors.js';
 import { cacheService } from '@/services/cache.service.js';
 import { userRepository } from '@/repositories/index.js';
-import { CACHE_KEYS_WORKSPACE, CACHE_TTL_WORKSPACE} from '@/configuration/cache.js';
+import { workspaceRepository } from '@/repositories/index.js';
+import { WorkspaceMapper } from '@/mappers/workspace.mapper.js';
+import type { WorkspaceMemberResponse, WorkspaceMemberResponseList, WorkspaceResponse, WorkspaceWithCountsResponseList } from '@/responses/workspace.respone.js';
+import type { IUserRepository } from '@/repositories/interfaces/user.repository.interface.js';
+import { CACHE_KEYS_WORKSPACE, CACHE_TTL_WORKSPACE } from '@/configuration/cache.js';
 
 export class WorkspaceService {
-    constructor(private workspaceRepo: IWorkspaceRepository) { }
+    constructor(private workspaceRepo: IWorkspaceRepository, private userRepo: IUserRepository) { }
 
-    async createWorkspace(userId: string, dto: CreateWorkspaceDto): Promise<Workspace> {
+    async createWorkspace(userId: string, dto: CreateWorkspaceDto): Promise<WorkspaceResponse> {
         const baseSlug = dto.slug ?? slugify(dto.name, { lower: true, strict: true, locale: 'vi' });
         const slug = await this.ensureUniqueSlug(baseSlug);
 
@@ -29,7 +28,7 @@ export class WorkspaceService {
         });
 
         await this.invalidateUserWorkspaceList(userId);
-        return workspace;
+        return WorkspaceMapper.toResponse(workspace);
     }
 
     private async ensureUniqueSlug(base: string): Promise<string> {
@@ -43,7 +42,7 @@ export class WorkspaceService {
     }
 
     /** User phải là member mới xem được */
-    async getWorkspaceById(workspaceId: string, userId: string): Promise<Workspace> {
+    async getWorkspaceById(workspaceId: string, userId: string): Promise<WorkspaceResponse> {
         const member = await this.workspaceRepo.findMember(workspaceId, userId);
         if (!member) throw new NotFoundError('Workspace not found');
 
@@ -51,23 +50,24 @@ export class WorkspaceService {
         return cacheService.getOrSet(key, CACHE_TTL_WORKSPACE.WORKSPACE_DETAIL, async () => {
             const ws = await this.workspaceRepo.findById(workspaceId);
             if (!ws) throw new NotFoundError('Workspace not found');
-            return ws;
+            return WorkspaceMapper.toResponse(ws);
         });
     }
 
-    async listMyWorkspaces(userId: string): Promise<WorkspaceWithCounts[]> {
+    async listMyWorkspaces(userId: string): Promise<WorkspaceWithCountsResponseList> {
         const version = await cacheService.getVersion(CACHE_KEYS_WORKSPACE.listVersion(userId));
         const key = CACHE_KEYS_WORKSPACE.list(userId, version);
 
-        return cacheService.getOrSet(key, CACHE_TTL_WORKSPACE.WORKSPACE_LIST, () =>
-            this.workspaceRepo.findManyByUserId(userId),
-        );
+        return cacheService.getOrSet(key, CACHE_TTL_WORKSPACE.WORKSPACE_LIST, async () => {
+            const list = await this.workspaceRepo.findManyByUserId(userId);
+            return WorkspaceMapper.toWithCountsList(list);
+        });
     }
 
-    async updateWorkspace(workspaceId: string, dto: UpdateWorkspaceDto): Promise<Workspace> {
+    async updateWorkspace(workspaceId: string, dto: UpdateWorkspaceDto): Promise<WorkspaceResponse> {
         const updated = await this.workspaceRepo.update(workspaceId, dto);
         await this.invalidateWorkspaceCache(workspaceId, updated.ownerId);
-        return updated;
+        return WorkspaceMapper.toResponse(updated);
     }
 
     /** Chỉ OWNER mới xóa được — middleware đã check nhưng Service vẫn verify */
@@ -80,18 +80,19 @@ export class WorkspaceService {
         await this.invalidateWorkspaceCache(workspaceId, userId);
     }
 
-    async listMembers(workspaceId: string, userId: string): Promise<WorkspaceMemberWithUser[]> {
+    async listMembers(workspaceId: string, userId: string): Promise<WorkspaceMemberResponseList> {
         const member = await this.workspaceRepo.findMember(workspaceId, userId);
         if (!member) throw new NotFoundError('Workspace not found');
 
         const key = CACHE_KEYS_WORKSPACE.memberList(workspaceId);
-        return cacheService.getOrSet(key, CACHE_TTL_WORKSPACE.MEMBER_LIST, () =>
-            this.workspaceRepo.findMembersByWorkspaceId(workspaceId),
-        );
+        return cacheService.getOrSet(key, CACHE_TTL_WORKSPACE.MEMBER_LIST, async () => {
+            const members = await this.workspaceRepo.findMembersByWorkspaceId(workspaceId);
+            return WorkspaceMapper.toMemberResponseList(members);
+        });
     }
 
-    async inviteMember(workspaceId: string, dto: InviteMemberDto): Promise<WorkspaceMember> {
-        const invitee = await userRepository.findByEmail(dto.email);
+    async inviteMember(workspaceId: string, dto: InviteMemberDto): Promise<WorkspaceMemberResponse> {
+        const invitee = await this.userRepo.findByEmail(dto.email);
         if (!invitee) {
             throw new BadRequestError(`User with email ${dto.email} has not registered yet`);
         }
@@ -104,18 +105,21 @@ export class WorkspaceService {
             invitee.id,
             dto.role as WorkspaceRole,
         );
-        await this.invalidateMembersCache(workspaceId);
-        await this.invalidateUserWorkspaceList(invitee.id);
-        return member;
+        const members = await this.workspaceRepo.findMembersByWorkspaceId(workspaceId);
+        const found = members.find((m) => m.userId === invitee.id)!;
+        return WorkspaceMapper.toMemberResponse(found);
     }
 
     async updateMemberRole(
         workspaceId: string,
         targetUserId: string,
         dto: UpdateRoleDto,
-    ): Promise<WorkspaceMember> {
+    ): Promise<WorkspaceMemberResponse> {
         const target = await this.workspaceRepo.findMember(workspaceId, targetUserId);
         if (!target) throw new NotFoundError('Member not found');
+
+        const user = await this.userRepo.findById(targetUserId);
+        if (!user) throw new NotFoundError('User not found');
 
         // Hạ cấp OWNER → không cho phép nếu là OWNER cuối
         if (target.role === 'OWNER' && dto.role !== 'OWNER') {
@@ -130,8 +134,9 @@ export class WorkspaceService {
             targetUserId,
             dto.role as WorkspaceRole,
         );
+
         await this.invalidateMembersCache(workspaceId);
-        return updated;
+        return WorkspaceMapper.toMemberResponse(updated);
     }
 
     async removeMember(workspaceId: string, targetUserId: string): Promise<void> {
@@ -160,7 +165,7 @@ export class WorkspaceService {
         await Promise.all([
             cacheService.del(CACHE_KEYS_WORKSPACE.detail(workspaceId)),
             cacheService.del(CACHE_KEYS_WORKSPACE.memberList(workspaceId)),
-            cacheService.bumpVersion(CACHE_KEYS_WORKSPACE   .listVersion(ownerId)),
+            cacheService.bumpVersion(CACHE_KEYS_WORKSPACE.listVersion(ownerId)),
         ]);
     }
 
@@ -169,5 +174,4 @@ export class WorkspaceService {
     }
 }
 
-import { workspaceRepository } from '@/repositories/index.js';
-export const workspaceService = new WorkspaceService(workspaceRepository);
+export const workspaceService = new WorkspaceService(workspaceRepository, userRepository);

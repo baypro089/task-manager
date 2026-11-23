@@ -103,6 +103,7 @@ model TaskStatus {
   tasks   Task[]
 
   @@unique([projectId, name])
+  @@index([projectId, position])
   @@map("task_statuses")
 }
 

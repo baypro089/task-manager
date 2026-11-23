@@ -36,6 +36,107 @@ const options: swaggerJsdoc.Options = {
                         },
                     },
                 },
+                Workspace: {
+                    type: 'object',
+                    properties: {
+                        id: { type: 'string', format: 'uuid' },
+                        name: { type: 'string' },
+                        slug: { type: 'string' },
+                        ownerId: { type: 'string', format: 'uuid' },
+                        createdAt: { type: 'string', format: 'date-time' },
+                        updatedAt: { type: 'string', format: 'date-time' },
+                    },
+                },
+                WorkspaceWithCounts: {
+                    allOf: [
+                        { $ref: '#/components/schemas/Workspace' },
+                        {
+                            type: 'object',
+                            properties: {
+                                counts: {
+                                    type: 'object',
+                                    properties: {
+                                        members: { type: 'integer' },
+                                        projects: { type: 'integer' },
+                                    },
+                                },
+                            },
+                        },
+                    ],
+                },
+                WorkspaceMember: {
+                    type: 'object',
+                    properties: {
+                        userId: { type: 'string', format: 'uuid' },
+                        role: { type: 'string', enum: ['OWNER', 'ADMIN', 'MEMBER', 'VIEWER'] },
+                        joinedAt: { type: 'string', format: 'date-time' },
+                        user: {
+                            type: 'object',
+                            properties: {
+                                id: { type: 'string', format: 'uuid' },
+                                email: { type: 'string', format: 'email' },
+                                displayName: { type: 'string' },
+                                avatarUrl: { type: 'string', nullable: true },
+                            },
+                        },
+                    },
+                },
+                Project: {
+                    type: 'object',
+                    properties: {
+                        id: { type: 'string', format: 'uuid' },
+                        workspaceId: { type: 'string', format: 'uuid' },
+                        name: { type: 'string' },
+                        description: { type: 'string', nullable: true },
+                        color: { type: 'string', nullable: true },
+                        isArchived: { type: 'boolean' },
+                        createdById: { type: 'string', format: 'uuid' },
+                        createdAt: { type: 'string', format: 'date-time' },
+                        updatedAt: { type: 'string', format: 'date-time' },
+                    },
+                },
+                ProjectWithCounts: {
+                    allOf: [
+                        { $ref: '#/components/schemas/Project' },
+                        {
+                            type: 'object',
+                            properties: {
+                                counts: {
+                                    type: 'object',
+                                    properties: {
+                                        tasks: { type: 'integer' },
+                                        statuses: { type: 'integer' },
+                                    },
+                                },
+                            },
+                        },
+                    ],
+                },
+                TaskStatus: {
+                    type: 'object',
+                    properties: {
+                        id: { type: 'string', format: 'uuid' },
+                        projectId: { type: 'string', format: 'uuid' },
+                        name: { type: 'string' },
+                        position: { type: 'integer' },
+                        isDone: { type: 'boolean' },
+                        createdAt: { type: 'string', format: 'date-time' },
+                    },
+                },
+                ProjectWithStatuses: {
+                    allOf: [
+                        { $ref: '#/components/schemas/Project' },
+                        {
+                            type: 'object',
+                            properties: {
+                                statuses: {
+                                    type: 'array',
+                                    items: { $ref: '#/components/schemas/TaskStatus' },
+                                },
+                            },
+                        },
+                    ],
+                },
             },
             securitySchemes: {
                 bearerAuth: {

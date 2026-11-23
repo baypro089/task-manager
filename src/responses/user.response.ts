@@ -5,9 +5,7 @@ export type UserResponse = {
     email: string;
     displayName: string | null;
     avatarUrl: string | null;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt: string;
+    updatedAt: string;
     isActive: boolean;
 }
-
-export type PagedUserResponse = PageResult<UserResponse>;

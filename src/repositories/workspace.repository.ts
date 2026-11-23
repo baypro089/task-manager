@@ -5,7 +5,7 @@ import type {
     WorkspaceWithCounts,
     WorkspaceMemberWithUser,
 } from '@/repositories/interfaces/workspace.repository.interface.js';
-import type { Workspace, WorkspaceMember, WorkspaceRole } from '@prisma/client';
+import type { Workspace, WorkspaceMember, WorkspaceRole } from '@/generated/prisma/client.js';
 
 export class WorkspaceRepository implements IWorkspaceRepository {
     async findById(id: string): Promise<Workspace | null> {
@@ -67,16 +67,22 @@ export class WorkspaceRepository implements IWorkspaceRepository {
         await prisma.workspace.delete({ where: { id } }); // Cascade xóa project, task, member
     }
 
-    async addMember(workspaceId: string, userId: string, role: WorkspaceRole): Promise<WorkspaceMember> {
+    async addMember(workspaceId: string, userId: string, role: WorkspaceRole): Promise<WorkspaceMemberWithUser> {
         return prisma.workspaceMember.create({
             data: { workspaceId, userId, role },
+            include: {
+                user: { select: { id: true, email: true, displayName: true, avatarUrl: true } },
+            },
         });
     }
 
-    async updateMemberRole(workspaceId: string, userId: string, role: WorkspaceRole): Promise<WorkspaceMember> {
+    async updateMemberRole(workspaceId: string, userId: string, role: WorkspaceRole): Promise<WorkspaceMemberWithUser> {
         return prisma.workspaceMember.update({
             where: { workspaceId_userId: { workspaceId, userId } },
             data: { role },
+            include: {
+                user: { select: { id: true, email: true, displayName: true, avatarUrl: true } },
+            },
         });
     }
 

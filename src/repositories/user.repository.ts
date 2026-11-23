@@ -1,15 +1,17 @@
 import { prisma } from '@/configuration/prisma.js';
 import type { QueryUserDto } from '@/dtos/user.dtos.js';
-import type { Prisma } from '@/generated/prisma/browser.js';
 import type { IUserRepository } from '@/repositories/interfaces/user.repository.interface.js';
-import type { User } from '@prisma/client';
+import type { User, Prisma } from '@/generated/prisma/client.js';
 
 export class UserRepository implements IUserRepository {
     async findAll(): Promise<User[]> {
         return prisma.user.findMany();
     }
 
-    async findMany(query: QueryUserDto): Promise<{ items: User[], total: number }> {
+    async findMany(query: {
+        page: number, pageSize: number, search?: string, sortBy: string,
+        sortOrder: 'asc' | 'desc', isActive?: boolean
+    }): Promise<{ items: User[], total: number }> {
 
         const { page, pageSize, search, sortBy, sortOrder, isActive } = query;
 
@@ -43,7 +45,7 @@ export class UserRepository implements IUserRepository {
         };
     }
 
-    async update(id: string, data: Partial<User>): Promise<User> {
+    async update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
         return prisma.user.update({ where: { id }, data });
     }
 
@@ -58,7 +60,7 @@ export class UserRepository implements IUserRepository {
         return prisma.user.findUnique({ where: { id } });
     }
 
-    async create(data: Partial<User>): Promise<User> {
+    async create(data: Prisma.UserCreateInput): Promise<User> {
         return prisma.user.create({ data });
     }
 }
