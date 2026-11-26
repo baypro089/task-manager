@@ -7,6 +7,7 @@ import { requireProjectAccess } from '@/middlewares/project-access.middleware.js
 import { createProjectSchema, updateProjectSchema, queryProjectSchema } from '@/dtos/project.dto.js';
 import { createStatusSchema, updateStatusSchema } from '@/dtos/task-status.dto.js';
 import * as ctrl from '@/controllers/project.controller.js';
+import { WorkspaceRole } from '@/generated/prisma/browser.js';
 
 const router = Router();
 router.use(authenticate);
@@ -42,7 +43,7 @@ router.use(authenticate);
  */
 router.post(
     '/workspaces/:workspaceId/projects',
-    requireWorkspaceRole('OWNER', 'ADMIN', 'MEMBER'),
+    requireWorkspaceRole(WorkspaceRole.OWNER, WorkspaceRole.ADMIN, WorkspaceRole.MEMBER),
     validate(createProjectSchema),
     ctrl.createProject,
 );
@@ -148,7 +149,7 @@ router.patch(
  */
 router.post(
     '/projects/:projectId/archive',
-    requireProjectAccess('OWNER', 'ADMIN'),
+    requireProjectAccess(WorkspaceRole.OWNER, WorkspaceRole.ADMIN),
     ctrl.archiveProject,
 );
 
@@ -169,7 +170,7 @@ router.post(
  */
 router.delete(
     '/projects/:projectId',
-    requireProjectAccess('OWNER', 'ADMIN'),
+    requireProjectAccess(WorkspaceRole.OWNER, WorkspaceRole.ADMIN),
     ctrl.deleteProject,
 );
 
@@ -224,7 +225,7 @@ router.get(
  */
 router.post(
     '/projects/:projectId/statuses',
-    requireProjectAccess('OWNER', 'ADMIN', 'MEMBER'),
+    requireProjectAccess(WorkspaceRole.OWNER, WorkspaceRole.ADMIN, WorkspaceRole.MEMBER),
     validate(createStatusSchema),
     ctrl.createStatus,
 );
@@ -250,7 +251,7 @@ router.post(
  */
 router.patch(
     '/projects/:projectId/statuses/:statusId',
-    requireProjectAccess('OWNER', 'ADMIN'),
+    requireProjectAccess(WorkspaceRole.OWNER, WorkspaceRole.ADMIN),
     validate(updateStatusSchema),
     ctrl.updateStatus,
 );
@@ -276,7 +277,7 @@ router.patch(
  */
 router.delete(
     '/projects/:projectId/statuses/:statusId',
-    requireProjectAccess('OWNER', 'ADMIN'),
+    requireProjectAccess(WorkspaceRole.OWNER, WorkspaceRole.ADMIN),
     ctrl.deleteStatus,
 );
 

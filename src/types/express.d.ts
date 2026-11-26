@@ -1,5 +1,5 @@
 // src/types/express.d.ts
-import type { WorkspaceMember, Project } from '@/generated/prisma/client.js';
+import type { WorkspaceMember, Project, Task } from '@/generated/prisma/client.js';
 
 declare global {
   namespace Express {
@@ -7,7 +7,8 @@ declare global {
       user?: { id: string };
       workspaceMember?: WorkspaceMember; // Dùng cho middleware workspace sau này
       project?: Project; // Dùng cho middleware project sau này
+      task?: Task;
     }
   }
 }
-export {};
+export { };

@@ -1,4 +1,3 @@
-// src/config/swagger.ts
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { env } from './env.js'; // Giả sử bạn có file env
@@ -132,6 +131,64 @@ const options: swaggerJsdoc.Options = {
                                 statuses: {
                                     type: 'array',
                                     items: { $ref: '#/components/schemas/TaskStatus' },
+                                },
+                            },
+                        },
+                    ],
+                },
+                TaskCard: {
+                    type: 'object',
+                    properties: {
+                        id: { type: 'string', format: 'uuid' },
+                        projectId: { type: 'string', format: 'uuid' },
+                        statusId: { type: 'string', format: 'uuid' },
+                        title: { type: 'string' },
+                        priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+                        dueDate: { type: 'string', format: 'date-time', nullable: true },
+                        position: { type: 'number' },
+                        counts: {
+                            type: 'object',
+                            properties: {
+                                subtasks: { type: 'integer' },
+                                assignees: { type: 'integer' },
+                                comments: { type: 'integer' },
+                            },
+                        },
+                    },
+                },
+                TaskDetail: {
+                    allOf: [
+                        { $ref: '#/components/schemas/TaskCard' },
+                        {
+                            type: 'object',
+                            properties: {
+                                description: { type: 'string', nullable: true },
+                                parentId: { type: 'string', format: 'uuid', nullable: true },
+                                createdById: { type: 'string', format: 'uuid' },
+                                completedAt: { type: 'string', format: 'date-time', nullable: true },
+                                createdAt: { type: 'string', format: 'date-time' },
+                                updatedAt: { type: 'string', format: 'date-time' },
+                                assignees: {
+                                    type: 'array',
+                                    items: {
+                                        type: 'object',
+                                        properties: {
+                                            userId: { type: 'string', format: 'uuid' },
+                                            displayName: { type: 'string' },
+                                            avatarUrl: { type: 'string', nullable: true },
+                                        },
+                                    },
+                                },
+                                labels: {
+                                    type: 'array',
+                                    items: {
+                                        type: 'object',
+                                        properties: {
+                                            id: { type: 'string', format: 'uuid' },
+                                            name: { type: 'string' },
+                                            color: { type: 'string' },
+                                        },
+                                    },
                                 },
                             },
                         },

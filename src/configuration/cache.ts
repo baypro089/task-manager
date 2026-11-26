@@ -36,3 +36,11 @@ export const CACHE_KEYS_PROJECT = {
     `project:list:${workspaceId}:v${version}:${hash}`,
   statuses: (projectId: string) => `project:statuses:${projectId}`,
 } as const;
+
+export const CACHE_TTL_TASK = { BOARD: 30, DETAIL: 120, LIST: 30 } as const;
+export const CACHE_KEYS_TASK = {
+  board: (projectId: string) => `task:board:${projectId}`,
+  detail: (id: string) => `task:detail:${id}`,
+  listVersion: (projectId: string) => `task:list:version:${projectId}`,
+  list: (projectId: string, v: number, hash: string) => `task:list:${projectId}:v${v}:${hash}`,
+} as const;

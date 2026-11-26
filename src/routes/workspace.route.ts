@@ -15,6 +15,7 @@ import {
     updateMemberRole,
     removeMember,
 } from '@/controllers/workspace.controller.js';
+import { WorkspaceRole } from '@/generated/prisma/browser.js';
 
 const router = Router();
 
@@ -110,7 +111,7 @@ router.get('/:workspaceId', requireWorkspaceMember, getWorkspace);
  */
 router.patch(
     '/:workspaceId',
-    requireWorkspaceRole('OWNER', 'ADMIN'),
+    requireWorkspaceRole(WorkspaceRole.OWNER, WorkspaceRole.ADMIN),
     validate(updateWorkspaceSchema),
     updateWorkspace,
 );
@@ -132,7 +133,7 @@ router.patch(
  *       204: { description: Xóa thành công }
  *       403: { description: Chỉ OWNER được xóa }
  */
-router.delete('/:workspaceId', requireWorkspaceRole('OWNER'), deleteWorkspace);
+router.delete('/:workspaceId', requireWorkspaceRole(WorkspaceRole.OWNER), deleteWorkspace);
 
 /**
  * @swagger
@@ -185,7 +186,7 @@ router.get('/:workspaceId/members', requireWorkspaceMember, listMembers);
  */
 router.post(
     '/:workspaceId/members',
-    requireWorkspaceRole('OWNER', 'ADMIN'),
+    requireWorkspaceRole(WorkspaceRole.OWNER, WorkspaceRole.ADMIN),
     validate(inviteMemberSchema),
     inviteMember,
 );
@@ -224,7 +225,7 @@ router.post(
  */
 router.patch(
     '/:workspaceId/members/:userId',
-    requireWorkspaceRole('OWNER'),
+    requireWorkspaceRole(WorkspaceRole.OWNER),
     validate(updateRoleSchema),
     updateMemberRole,
 );
@@ -252,7 +253,7 @@ router.patch(
  */
 router.delete(
     '/:workspaceId/members/:userId',
-    requireWorkspaceRole('OWNER', 'ADMIN'),
+    requireWorkspaceRole(WorkspaceRole.OWNER, WorkspaceRole.ADMIN),
     removeMember,
 );
 

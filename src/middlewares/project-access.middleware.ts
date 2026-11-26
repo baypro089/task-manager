@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import type { WorkspaceRole } from '@prisma/client';
+import type { WorkspaceRole } from '@/generated/prisma/client.js';
 import { projectRepository, workspaceRepository } from '../repositories/index.js';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../utils/errors.js';
 
